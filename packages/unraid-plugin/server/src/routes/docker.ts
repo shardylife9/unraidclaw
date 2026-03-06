@@ -127,17 +127,19 @@ export function registerDockerRoutes(app: FastifyInstance, gql: GraphQLClient): 
   app.delete<{ Params: { id: string }; Querystring: { force?: string } }>("/api/docker/containers/:id", {
     preHandler: requirePermission(Resource.DOCKER, Action.DELETE),
     handler: async (req, reply) => {
-      if (req.query.force === "true") {
-        // Stop first, ignore errors (might already be stopped)
-        try {
-          await gql.query(actionMutation("stop"), { id: req.params.id });
-        } catch {}
+      try {
+        if (req.query.force === "true") {
+          await execFileAsync("docker", ["rm", "-f", req.params.id]);
+        } else {
+          await execFileAsync("docker", ["rm", req.params.id]);
+        }
+        return reply.send({ ok: true, data: { id: req.params.id } });
+      } catch (err: any) {
+        return reply.status(400).send({
+          ok: false,
+          error: { code: "DOCKER_REMOVE_FAILED", message: err.stderr ?? err.message },
+        });
       }
-      const data = await gql.query<{ docker: { remove: DockerActionResponse } }>(
-        actionMutation("remove"),
-        { id: req.params.id }
-      );
-      return reply.send({ ok: true, data: data.docker.remove });
     },
   });
 
