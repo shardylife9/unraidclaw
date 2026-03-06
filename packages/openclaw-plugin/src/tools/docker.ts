@@ -156,17 +156,19 @@ export function registerDockerTools(api: any, client: UnraidClient): void {
 
   api.registerTool({
     name: "unraid_docker_remove",
-    description: "Remove a Docker container. This is a destructive operation that cannot be undone.",
+    description: "Remove a Docker container. Pass force=true to stop and remove in one step. This is a destructive operation that cannot be undone.",
     parameters: {
       type: "object",
       properties: {
         id: { type: "string", description: "Container ID or name" },
+        force: { type: "boolean", description: "Stop the container before removing (default: false)" },
       },
       required: ["id"],
     },
     execute: async (_id, params) => {
       try {
-        return textResult(await client.delete(`/api/docker/containers/${params.id}`));
+        const query = params.force ? "?force=true" : "";
+        return textResult(await client.delete(`/api/docker/containers/${params.id}${query}`));
       } catch (err) {
         return errorResult(err);
       }
