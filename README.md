@@ -111,6 +111,26 @@ Authentication via `x-api-key: <api-key>` header.
 | **Users** | GET | `/api/users/me` | `me:read` |
 | **Logs** | GET | `/api/logs/syslog` | `logs:read` |
 
+### Docker create
+
+`POST /api/docker/containers` accepts:
+
+```json
+{
+  "image": "vikunja/vikunja:latest",
+  "name": "vikunja",
+  "ports": ["3456:3456"],
+  "volumes": ["/mnt/cache/appdata/vikunja:/app/vikunja/files"],
+  "env": ["VIKUNJA_SERVICE_TIMEZONE=Europe/London"],
+  "restart": "unless-stopped",
+  "network": "bridge",
+  "icon": "https://example.com/icon.png",
+  "webui": "http://[IP]:[PORT:3456]/"
+}
+```
+
+Only `image` is required. The container is started immediately and an Unraid dockerMan XML template is created so it appears in the Docker tab.
+
 ### Docker actions
 
 `POST /api/docker/containers/:id/:action` where action is one of: `start`, `stop`, `restart`, `pause`, `unpause`
