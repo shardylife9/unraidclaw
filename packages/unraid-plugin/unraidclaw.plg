@@ -5,10 +5,10 @@
 <!ENTITY author    "emaspa">
 <!ENTITY version   "0.2.0">
 <!ENTITY launch    "Settings/unraidclaw">
-<!ENTITY repo      "emaspa/unraidclaw">
+<!ENTITY repo      "shardylife9/unraidclaw">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&repo;/main/packages/unraid-plugin/unraidclaw.plg">
 <!ENTITY pkgURL    "https://github.com/&repo;/releases/download/v&version;/&name;-&version;-x86_64-1.txz">
-<!ENTITY md5       "e31d5a2aa6319d6ddde1398fbea4622c">
+<!ENTITY md5       "51ea2cf21fde3700d346c0df75bca189">
 ]>
 
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0" max="7.99.99" support="https://forums.unraid.net/topic/197498-plugin-support-unraidclaw-ai-agent-gateway-with-permission-control/" description="Permission-enforcing REST API gateway that lets AI agents manage your Unraid server with fine-grained access control.">
