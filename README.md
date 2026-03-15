@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/emaspa/unraidclaw/releases"><img src="https://img.shields.io/github/v/release/emaspa/unraidclaw" alt="Release" /></a>
+  <a href="https://github.com/shardylife9/unraidclaw/releases"><img src="https://img.shields.io/github/v/release/shardylife9/unraidclaw" alt="Release" /></a>
   <a href="https://www.npmjs.com/package/unraidclaw"><img src="https://img.shields.io/npm/v/unraidclaw" alt="npm" /></a>
   <img src="https://img.shields.io/badge/unraid-7.0%2B-orange" alt="Unraid 7.0+" />
   <img src="https://img.shields.io/badge/node-22%2B-green" alt="Node 22+" />
@@ -17,21 +17,30 @@
 
 ---
 
-UnraidClaw sits between AI agents and your Unraid server, providing a unified REST API with fine-grained access control. It combines Unraid's GraphQL API with direct system integration (CLI commands for parity checks, reboot/shutdown, and syslog; filesystem operations for share config editing and notification management; network introspection via `ip`) to expose capabilities that no single Unraid API covers. Every call is authenticated, authorized against a configurable permission matrix, and logged.
+UnraidClaw sits between AI agents and your Unraid server, providing a unified REST API with fine-grained access control. It combines Unraid's GraphQL API with direct system integration (CLI commands for Docker, VMs, parity checks, rclone, Docker Compose; filesystem operations for share config editing and notification management) to expose capabilities that no single Unraid API covers. Every call is authenticated, authorized against a configurable permission matrix, and logged.
 
 ## Features
 
-- **43 tools** across 11 categories: Docker, VMs, Array, Disks, Shares, System, Notifications, Network, Users, Logs
-- **22 permission keys** in a resource:action matrix, configurable from the WebGUI
+- **60+ tools** across 15 categories: Docker, Docker Updates, VMs, VM Config, Array, Disks, Shares, System, Notifications, Network, Users, Logs, GraphQL, Rclone, Docker Compose
+- **28 permission keys** in a resource:action matrix, configurable from the WebGUI
+- **Dry-run mode** on all write endpoints — preview changes before executing
+- **GraphQL escape hatch** for arbitrary queries beyond built-in tools
+- **Docker update management** — check for and apply container image updates
+- **Rclone cloud storage** — manage remotes, browse files, copy/sync/move
+- **Docker Compose** — manage stacks (up, down, pull, restart, logs)
+- **VM config generation** — generate libvirt XML and define VMs with templates
 - **HTTPS** with auto-generated self-signed TLS certificate
-- **SHA-256 API key** authentication
+- **SHA-256 API key** authentication with rate limiting
 - **Activity logging** with JSONL format, filter, and search
 - **OpenClaw plugin** available on npm (`openclaw plugins install unraidclaw`)
+- **MCP server** available for Claude Code and other MCP-compatible agents
 - **Single-file server**, no `node_modules` needed on Unraid
 
 ## Requirements
 
 - **Unraid 7.0.0+** (Node.js 22 is built-in)
+- **Rclone plugin** (optional, for rclone features)
+- **Docker Compose Manager plugin** (optional, for compose features)
 
 ## Installation
 
@@ -43,7 +52,7 @@ Search for **UnraidClaw** in the Unraid CA store and click Install.
 
 ```bash
 # Download and install the plugin
-plugin install https://raw.githubusercontent.com/emaspa/unraidclaw/main/packages/unraid-plugin/unraidclaw.plg
+plugin install https://raw.githubusercontent.com/shardylife9/unraidclaw/main/packages/unraid-plugin/unraidclaw.plg
 ```
 
 ### Setup
@@ -69,6 +78,17 @@ All endpoints return a consistent envelope:
 
 Authentication via `x-api-key: <api-key>` header.
 
+### Dry-Run Mode
+
+All write endpoints support dry-run mode. Add `?dry_run=true` to preview what would happen without executing:
+
+```bash
+curl -X POST "https://unraid:9876/api/docker/containers/abc/start?dry_run=true" \
+  -H "x-api-key: YOUR_KEY"
+```
+
+Returns `{ "ok": true, "data": { "dry_run": true, "would_execute": "...", "description": "..." } }`
+
 ### Endpoints
 
 | Category | Method | Endpoint | Permission |
@@ -80,10 +100,15 @@ Authentication via `x-api-key: <api-key>` header.
 | | POST | `/api/docker/containers` | `docker:create` |
 | | POST | `/api/docker/containers/:id/:action` | `docker:update` |
 | | DELETE | `/api/docker/containers/:id` | `docker:delete` |
+| **Docker Updates** | GET | `/api/docker/updates` | `docker:read` |
+| | POST | `/api/docker/containers/:id/update` | `docker:update` |
+| | POST | `/api/docker/update-all` | `docker:update` |
 | **VMs** | GET | `/api/vms` | `vms:read` |
 | | GET | `/api/vms/:id` | `vms:read` |
 | | POST | `/api/vms/:id/:action` | `vms:update` |
 | | DELETE | `/api/vms/:id` | `vms:delete` |
+| **VM Config** | POST | `/api/vms/generate-xml` | `vms:create` |
+| | POST | `/api/vms/define` | `vms:create` |
 | **Array** | GET | `/api/array/status` | `array:read` |
 | | GET | `/api/array/parity/status` | `array:read` |
 | | POST | `/api/array/start` | `array:update` |
@@ -110,6 +135,20 @@ Authentication via `x-api-key: <api-key>` header.
 | **Network** | GET | `/api/network` | `network:read` |
 | **Users** | GET | `/api/users/me` | `me:read` |
 | **Logs** | GET | `/api/logs/syslog` | `logs:read` |
+| **GraphQL** | POST | `/api/graphql` | `graphql:read` / `graphql:update` |
+| **Rclone** | GET | `/api/rclone/remotes` | `rclone:read` |
+| | GET | `/api/rclone/remotes/:name` | `rclone:read` |
+| | GET | `/api/rclone/remotes/:name/ls` | `rclone:read` |
+| | POST | `/api/rclone/copy` | `rclone:update` |
+| | POST | `/api/rclone/sync` | `rclone:update` |
+| | POST | `/api/rclone/move` | `rclone:update` |
+| **Compose** | GET | `/api/compose/stacks` | `compose:read` |
+| | GET | `/api/compose/stacks/:name` | `compose:read` |
+| | POST | `/api/compose/stacks/:name/up` | `compose:update` |
+| | POST | `/api/compose/stacks/:name/down` | `compose:update` |
+| | POST | `/api/compose/stacks/:name/pull` | `compose:update` |
+| | POST | `/api/compose/stacks/:name/restart` | `compose:update` |
+| | GET | `/api/compose/stacks/:name/logs` | `compose:read` |
 
 ### Docker create
 
@@ -135,9 +174,44 @@ Only `image` is required. The container is started immediately and an Unraid doc
 
 `POST /api/docker/containers/:id/:action` where action is one of: `start`, `stop`, `restart`, `pause`, `unpause`
 
+### Docker updates
+
+```bash
+# Check which containers have updates available
+GET /api/docker/updates
+
+# Update a single container
+POST /api/docker/containers/:id/update
+
+# Update all containers with available updates
+POST /api/docker/update-all
+```
+
 ### VM actions
 
 `POST /api/vms/:id/:action` where action is one of: `start`, `stop`, `force-stop`, `pause`, `resume`, `reboot`, `reset`
+
+### VM config generation
+
+```bash
+# Generate libvirt XML for a new VM
+POST /api/vms/generate-xml
+{
+  "name": "ubuntu-server",
+  "memory_mb": 4096,
+  "vcpus": 4,
+  "os_type": "linux",
+  "disk_path": "/mnt/user/domains/ubuntu/vdisk1.img",
+  "disk_size_gb": 50,
+  "iso_path": "/mnt/user/isos/ubuntu-24.04.iso",
+  "network": "br0"
+}
+
+# Generate XML AND define the VM (ready to start)
+POST /api/vms/define
+```
+
+Supported `os_type` values: `linux`, `windows`, `macos`. Windows VMs get HyperV features; macOS gets the Penryn CPU model.
 
 ### Share update
 
@@ -152,9 +226,85 @@ Only `image` is required. The container is started immediately and an Unraid doc
 }
 ```
 
+### GraphQL proxy
+
+Execute any GraphQL query or mutation against Unraid's API:
+
+```bash
+POST /api/graphql
+{
+  "query": "{ info { os { hostname uptime } } }",
+  "variables": {}
+}
+```
+
+Queries require `graphql:read` permission; mutations require `graphql:update`.
+
+### Rclone operations
+
+```bash
+# List configured remotes
+GET /api/rclone/remotes
+
+# Browse files on a remote
+GET /api/rclone/remotes/gdrive/ls?path=backups&recursive=false
+
+# Copy files (supports dry_run)
+POST /api/rclone/copy
+{ "source": "gdrive:backups", "dest": "/mnt/user/backups" }
+
+# Sync (mirror source to dest)
+POST /api/rclone/sync
+{ "source": "/mnt/user/media", "dest": "b2:my-bucket/media" }
+```
+
+Requires the rclone plugin to be installed on Unraid.
+
+### Docker Compose
+
+```bash
+# List all stacks
+GET /api/compose/stacks
+
+# Start a stack
+POST /api/compose/stacks/my-stack/up
+
+# Stop a stack
+POST /api/compose/stacks/my-stack/down
+
+# Pull latest images
+POST /api/compose/stacks/my-stack/pull
+
+# View logs
+GET /api/compose/stacks/my-stack/logs?tail=200
+```
+
+Requires the Docker Compose Manager plugin.
+
+## MCP Server
+
+An MCP (Model Context Protocol) server is available for Claude Code and other MCP-compatible agents. Install it alongside the Unraid plugin:
+
+```json
+{
+  "mcpServers": {
+    "unraidclaw": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["--directory", "/path/to/unraidclaw_mcp", "run", "unraidclaw-mcp"],
+      "env": {
+        "UNRAIDCLAW_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+The MCP server exposes 47 tools covering all gateway features.
+
 ## OpenClaw Plugin
 
-The [OpenClaw](https://github.com/openclaw/openclaw) plugin exposes all 43 tools to any AI agent that supports the OpenClaw protocol.
+The [OpenClaw](https://github.com/openclaw/openclaw) plugin exposes all tools to any AI agent that supports the OpenClaw protocol.
 
 ### Install
 
@@ -185,22 +335,6 @@ Edit `~/.openclaw/openclaw.json`:
 
 Set `tlsSkipVerify: true` when using the auto-generated self-signed certificate.
 
-### Tools
-
-| Category | Tools |
-|----------|-------|
-| Health | `unraid_health_check` |
-| Docker | `unraid_docker_list`, `unraid_docker_inspect`, `unraid_docker_logs`, `unraid_docker_create`, `unraid_docker_start`, `unraid_docker_stop`, `unraid_docker_restart`, `unraid_docker_pause`, `unraid_docker_unpause`, `unraid_docker_remove` |
-| VMs | `unraid_vm_list`, `unraid_vm_inspect`, `unraid_vm_start`, `unraid_vm_stop`, `unraid_vm_pause`, `unraid_vm_resume`, `unraid_vm_force_stop`, `unraid_vm_reboot` |
-| Array | `unraid_array_status`, `unraid_array_start`, `unraid_array_stop`, `unraid_parity_status`, `unraid_parity_start`, `unraid_parity_pause`, `unraid_parity_resume`, `unraid_parity_cancel` |
-| Disks | `unraid_disk_list`, `unraid_disk_details` |
-| Shares | `unraid_share_list`, `unraid_share_details`, `unraid_share_update` |
-| System | `unraid_system_info`, `unraid_system_metrics`, `unraid_service_list`, `unraid_system_reboot`, `unraid_system_shutdown` |
-| Notifications | `unraid_notification_list`, `unraid_notification_create`, `unraid_notification_archive`, `unraid_notification_delete` |
-| Network | `unraid_network_info` |
-| Users | `unraid_user_me` |
-| Logs | `unraid_syslog` |
-
 ## Permissions
 
 Permissions use a `resource:action` format. Configure them from the WebGUI Permissions tab or edit `/boot/config/plugins/unraidclaw/permissions.json` directly.
@@ -208,15 +342,20 @@ Permissions use a `resource:action` format. Configure them from the WebGUI Permi
 | Category | Permissions |
 |----------|------------|
 | Docker | `docker:read`, `docker:create`, `docker:update`, `docker:delete` |
-| VMs | `vms:read`, `vms:update`, `vms:delete` |
+| VMs | `vms:read`, `vms:create`, `vms:update`, `vms:delete` |
 | Array & Storage | `array:read`, `array:update`, `disk:read`, `share:read`, `share:update` |
 | System | `info:read`, `os:update`, `services:read` |
 | Notifications | `notification:read`, `notification:create`, `notification:update`, `notification:delete` |
 | Network | `network:read` |
 | Users | `me:read` |
 | Logs | `logs:read` |
+| GraphQL | `graphql:read`, `graphql:update` |
+| Rclone | `rclone:read`, `rclone:update` |
+| Compose | `compose:read`, `compose:update` |
 
 The WebGUI includes presets: **Read Only**, **Docker Manager**, **VM Manager**, **Full Admin**, and **None**.
+
+New permissions added on upgrade are disabled by default — existing permissions are preserved.
 
 ## Architecture
 
@@ -225,12 +364,13 @@ The WebGUI includes presets: **Read Only**, **Docker Manager**, **VM Manager**, 
                                                        /            (list queries, array, disks)
 ┌─────────────┐     HTTPS      ┌──────────────────┐──+
 │  AI Agent   │ ──────────────> │   UnraidClaw     │   \
-│  (OpenClaw) │   x-api-key    │   (Fastify)      │    CLI ──────> docker, virsh, mdcmd,
-└─────────────┘                 │                  │   /            reboot, ip, ...
-                                │  - Auth          │──+
+│ (MCP/OClaw) │   x-api-key    │   (Fastify)      │    CLI ──────> docker, virsh, mdcmd,
+└─────────────┘                 │                  │   /            rclone, docker compose,
+                                │  - Auth          │──+             reboot, ip, qemu-img
                                 │  - Permissions   │   \
                                 │  - Activity Log  │    Filesystem > share configs, syslog,
-                                └──────────────────┘                 notifications
+                                │  - Dry-Run       │                 notifications, compose
+                                └──────────────────┘                 projects
 ```
 
 This is a pnpm monorepo with three packages:
@@ -244,10 +384,13 @@ This is a pnpm monorepo with three packages:
 ## Security
 
 - API keys are hashed with SHA-256 before storage; the plaintext key is never persisted
+- Rate limiting on authentication (10 attempts/minute per IP)
 - All requests require authentication via `x-api-key` header
 - Every API call is checked against the permission matrix before execution
 - Activity logging records all requests with timestamps, endpoints, and results
 - HTTPS with auto-generated EC (prime256v1) certificates, 10-year validity
+- CORS restricted to local network origins only
+- Input validation on all endpoints with protection against command injection and path traversal
 - The server runs locally on your Unraid box, no cloud dependencies
 
 ## License
