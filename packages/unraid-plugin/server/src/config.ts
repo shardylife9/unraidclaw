@@ -12,6 +12,8 @@ export interface ServerConfig {
   maxLogSize: number;
   tlsCert: string;
   tlsKey: string;
+  composeDir: string;
+  rcloneConfig: string;
 }
 
 const FLASH_BASE = process.env.FLASH_BASE ?? "/boot/config/plugins/unraidclaw";
@@ -59,6 +61,8 @@ export function loadConfig(): ServerConfig {
     maxLogSize: parseInt(cfg.MAX_LOG_SIZE ?? process.env.OCC_MAX_LOG_SIZE ?? "10485760", 10),
     tlsCert: cfg.TLS_CERT ?? process.env.OCC_TLS_CERT ?? join(tlsDir, "cert.pem"),
     tlsKey: cfg.TLS_KEY ?? process.env.OCC_TLS_KEY ?? join(tlsDir, "key.pem"),
+    composeDir: cfg.COMPOSE_DIR ?? process.env.OCC_COMPOSE_DIR ?? "/boot/config/plugins/compose.manager/projects",
+    rcloneConfig: cfg.RCLONE_CONFIG ?? process.env.OCC_RCLONE_CONFIG ?? "/boot/config/plugins/rclone/.rclone.conf",
   };
 }
 
