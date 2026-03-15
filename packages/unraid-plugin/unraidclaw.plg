@@ -3,7 +3,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "unraidclaw">
 <!ENTITY author    "emaspa">
-<!ENTITY version   "0.1.26">
+<!ENTITY version   "0.2.0">
 <!ENTITY launch    "Settings/unraidclaw">
 <!ENTITY repo      "emaspa/unraidclaw">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&repo;/main/packages/unraid-plugin/unraidclaw.plg">
@@ -14,6 +14,16 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0" max="7.99.99" support="https://forums.unraid.net/topic/197498-plugin-support-unraidclaw-ai-agent-gateway-with-permission-control/" description="Permission-enforcing REST API gateway that lets AI agents manage your Unraid server with fine-grained access control.">
 
 <CHANGES>
+### 0.2.0
+- Feature: GraphQL proxy endpoint (POST /api/graphql) for raw query/mutation pass-through
+- Feature: Docker container update checking and batch update (GET /api/docker/updates, POST update-all)
+- Feature: Rclone cloud storage management (list remotes, browse, copy/sync/move)
+- Feature: Docker Compose stack management (list, inspect, up/down/pull/restart, logs)
+- Feature: VM config generation and define (POST /api/vms/generate-xml, /api/vms/define)
+- New permissions: graphql:read, graphql:update, rclone:read, rclone:update, compose:read, compose:update, vms:create
+- Config: added COMPOSE_DIR and RCLONE_CONFIG settings
+- Permissions auto-migrate on upgrade (new keys default to disabled)
+
 ### 0.1.26
 - Security: fix command injection in syslog and notification endpoints (execSync to execFileAsync)
 - Security: fix path traversal in notification archive/delete and docker template filename
@@ -92,13 +102,18 @@
 <README>
 **UnraidClaw** is a permission-enforcing REST API gateway that lets AI agents manage your Unraid server.
 
-It proxies requests to Unraid's built-in GraphQL API with fine-grained access control, so you can safely expose Docker, VMs, Array, Shares, System, Notifications, and Network management to AI tools.
+It proxies requests to Unraid's built-in GraphQL API with fine-grained access control, so you can safely expose Docker, VMs, Array, Shares, System, Notifications, Network, Rclone, and Compose management to AI tools.
 
 **Features:**
 - Full resource:action permission matrix configurable from the WebGUI
 - SHA-256 API key authentication
 - Activity logging with JSONL format
 - Tabbed settings UI (Dashboard, Settings, Permissions, Activity Log)
+- Raw GraphQL proxy for advanced queries and mutations
+- Docker container update checking and batch updates
+- Rclone cloud storage management (list remotes, browse, copy/sync/move)
+- Docker Compose stack management (up, down, pull, restart, logs)
+- VM config generation and automated virsh define
 - Requires Node.js 22+ (built-in on Unraid 7.x)
 </README>
 
@@ -160,6 +175,8 @@ GRAPHQL_URL="http://localhost/graphql"
 UNRAID_API_KEY=""
 LOG_FILE="/boot/config/plugins/unraidclaw/activity.jsonl"
 MAX_LOG_SIZE="10485760"
+COMPOSE_DIR="/boot/config/plugins/compose.manager/projects"
+RCLONE_CONFIG="/boot/config/plugins/rclone/.rclone.conf"
 CFGEOF
   echo "Created default config."
 fi
@@ -168,6 +185,24 @@ fi
 if [ ! -f "${CFG_DIR}/permissions.json" ]; then
   echo '{}' > "${CFG_DIR}/permissions.json"
   echo "Created default permissions."
+fi
+
+# Migrate config: add new keys if upgrading from older version
+CONFIG="${CFG_DIR}/unraidclaw.cfg"
+if [ -f "$CONFIG" ]; then
+  grep -q "COMPOSE_DIR" "$CONFIG" || echo 'COMPOSE_DIR="/boot/config/plugins/compose.manager/projects"' >> "$CONFIG"
+  grep -q "RCLONE_CONFIG" "$CONFIG" || echo 'RCLONE_CONFIG="/boot/config/plugins/rclone/.rclone.conf"' >> "$CONFIG"
+fi
+
+# Migrate permissions: add new permission keys (default false) on upgrade
+PERM_FILE="${CFG_DIR}/permissions.json"
+if [ -f "$PERM_FILE" ]; then
+  for KEY in "graphql:read" "graphql:update" "rclone:read" "rclone:update" "compose:read" "compose:update" "vms:create"; do
+    if ! grep -q "\"$KEY\"" "$PERM_FILE"; then
+      # Insert key before the closing brace
+      sed -i "s/}$/,\"$KEY\":false}/" "$PERM_FILE"
+    fi
+  done
 fi
 
 # Make scripts executable

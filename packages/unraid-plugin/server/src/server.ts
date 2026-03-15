@@ -15,6 +15,11 @@ import { registerNotificationRoutes } from "./routes/notifications.js";
 import { registerNetworkRoutes } from "./routes/network.js";
 import { registerUserRoutes } from "./routes/users.js";
 import { registerLogRoutes } from "./routes/logs.js";
+import { registerGraphQLProxyRoutes } from "./routes/graphql-proxy.js";
+import { registerDockerUpdateRoutes } from "./routes/docker-updates.js";
+import { registerRcloneRoutes } from "./routes/rclone.js";
+import { registerComposeRoutes } from "./routes/compose.js";
+import { registerVMConfigRoutes } from "./routes/vm-config.js";
 
 export function createServer(config: ServerConfig, httpsOpts?: { cert: Buffer; key: Buffer }) {
   const app = Fastify({ logger: true, ...(httpsOpts ? { https: httpsOpts } : {}) });
@@ -107,6 +112,11 @@ export function createServer(config: ServerConfig, httpsOpts?: { cert: Buffer; k
   registerNetworkRoutes(app, gql);
   registerUserRoutes(app, gql);
   registerLogRoutes(app, gql);
+  registerGraphQLProxyRoutes(app, gql);
+  registerDockerUpdateRoutes(app, gql);
+  registerRcloneRoutes(app, gql);
+  registerComposeRoutes(app, gql);
+  registerVMConfigRoutes(app, gql);
 
   return app;
 }

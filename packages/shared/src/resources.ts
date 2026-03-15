@@ -11,6 +11,9 @@ export enum Resource {
   NETWORK = "network",
   ME = "me",
   LOGS = "logs",
+  GRAPHQL = "graphql",
+  RCLONE = "rclone",
+  COMPOSE = "compose",
 }
 
 export enum Action {
@@ -51,6 +54,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     description: "Manage VMs / libvirt domains",
     permissions: [
       { key: "vms:read", label: "List & Inspect", description: "List VMs and view details" },
+      { key: "vms:create", label: "Create", description: "Generate VM configs and define VMs" },
       { key: "vms:update", label: "Control", description: "Start, stop, pause, resume, reboot VMs" },
       { key: "vms:delete", label: "Remove", description: "Remove VMs", destructive: true },
     ],
@@ -104,6 +108,30 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     description: "System logs",
     permissions: [
       { key: "logs:read", label: "System Logs", description: "View syslog entries" },
+    ],
+  },
+  {
+    name: "GraphQL",
+    description: "Raw GraphQL API access",
+    permissions: [
+      { key: "graphql:read", label: "Query", description: "Execute read-only GraphQL queries" },
+      { key: "graphql:update", label: "Mutate", description: "Execute GraphQL mutations" },
+    ],
+  },
+  {
+    name: "Rclone",
+    description: "Cloud storage management via rclone",
+    permissions: [
+      { key: "rclone:read", label: "View", description: "List remotes and browse files" },
+      { key: "rclone:update", label: "Transfer", description: "Copy, sync, and move files" },
+    ],
+  },
+  {
+    name: "Compose",
+    description: "Docker Compose stack management",
+    permissions: [
+      { key: "compose:read", label: "View", description: "List stacks and view logs" },
+      { key: "compose:update", label: "Control", description: "Start, stop, pull, and restart stacks" },
     ],
   },
 ];
