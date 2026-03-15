@@ -8,13 +8,17 @@
 <!ENTITY repo      "shardylife9/unraidclaw">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&repo;/main/packages/unraid-plugin/unraidclaw.plg">
 <!ENTITY pkgURL    "https://github.com/&repo;/releases/download/v&version;/&name;-&version;-x86_64-1.txz">
-<!ENTITY md5       "c1a6c382a2520844c889bc9d8824cf20">
+<!ENTITY md5       "6e73c07a9c214b5ef505fcfafbccf472">
 ]>
 
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0" max="7.99.99" support="https://forums.unraid.net/topic/197498-plugin-support-unraidclaw-ai-agent-gateway-with-permission-control/" description="Permission-enforcing REST API gateway that lets AI agents manage your Unraid server with fine-grained access control.">
 
 <CHANGES>
 ### 0.2.2
+- Feature: compose stack edit (PUT /api/compose/stacks/:name) with YAML validation
+- Feature: compose stack create (POST /api/compose/stacks) 
+- Feature: compose stack delete (DELETE /api/compose/stacks/:name)
+
 - Add GraphQL, Rclone, Compose, and vms:create permissions to WebGUI
 - Update JS presets (read-only, docker-manager, vm-manager) with new permissions
 - Fix system_info/metrics using wrong GraphQL memory fields (CLI fallback)
