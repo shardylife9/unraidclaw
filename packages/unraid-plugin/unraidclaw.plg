@@ -3,22 +3,23 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "unraidclaw">
 <!ENTITY author    "emaspa">
-<!ENTITY version   "0.2.1">
+<!ENTITY version   "0.2.2">
 <!ENTITY launch    "Settings/unraidclaw">
 <!ENTITY repo      "shardylife9/unraidclaw">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&repo;/main/packages/unraid-plugin/unraidclaw.plg">
 <!ENTITY pkgURL    "https://github.com/&repo;/releases/download/v&version;/&name;-&version;-x86_64-1.txz">
-<!ENTITY md5       "e2ad1f4a16eb0250cd4a3b122dc93468">
+<!ENTITY md5       "c1a6c382a2520844c889bc9d8824cf20">
 ]>
 
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0" max="7.99.99" support="https://forums.unraid.net/topic/197498-plugin-support-unraidclaw-ai-agent-gateway-with-permission-control/" description="Permission-enforcing REST API gateway that lets AI agents manage your Unraid server with fine-grained access control.">
 
 <CHANGES>
-### 0.2.1
-- Fix system_info and system_metrics using wrong GraphQL memory fields (use CLI fallback)
-- Fix notification overview using 'normal' instead of 'info' field
-- Fix rc.unraidclaw status output to match WebGUI expected format
-- Add OCC_VERSION export to rc script
+### 0.2.2
+- Add GraphQL, Rclone, Compose, and vms:create permissions to WebGUI
+- Update JS presets (read-only, docker-manager, vm-manager) with new permissions
+- Fix system_info/metrics using wrong GraphQL memory fields (CLI fallback)
+- Fix notification overview 'normal' → 'info' field
+- Fix rc.unraidclaw status output for WebGUI compatibility
 
 ### 0.2.0
 - Feature: GraphQL proxy endpoint (POST /api/graphql) for raw query/mutation pass-through
