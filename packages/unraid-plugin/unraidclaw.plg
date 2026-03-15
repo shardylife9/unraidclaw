@@ -8,7 +8,7 @@
 <!ENTITY repo      "shardylife9/unraidclaw">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&repo;/main/packages/unraid-plugin/unraidclaw.plg">
 <!ENTITY pkgURL    "https://github.com/&repo;/releases/download/v&version;/&name;-&version;-x86_64-1.txz">
-<!ENTITY md5       "51ea2cf21fde3700d346c0df75bca189">
+<!ENTITY md5       "f35ef2bd0859076ba54e6125f7cebbe1">
 ]>
 
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.0" max="7.99.99" support="https://forums.unraid.net/topic/197498-plugin-support-unraidclaw-ai-agent-gateway-with-permission-control/" description="Permission-enforcing REST API gateway that lets AI agents manage your Unraid server with fine-grained access control.">
